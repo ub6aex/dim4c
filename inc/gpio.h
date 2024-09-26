@@ -1,9 +1,9 @@
 #ifndef _GPIO_H
 #define _GPIO_H
 
-void gpioInit(void);
+void GPIO_init(void);
 
-void status_led_on(void);
-void status_led_off(void);
+void GPIO_statusLedOn(void);
+void GPIO_statusLedOff(void);
 
 #endif

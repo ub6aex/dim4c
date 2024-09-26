@@ -1,7 +1,7 @@
 #ifndef _WDG_H
 #define _WDG_H
 
-void WDGinit(uint16_t ms);
-void WDGreset(void);
+void WDG_init(uint16_t ms);
+void WDG_reset(void);
 
 #endif

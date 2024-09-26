@@ -3,14 +3,14 @@
 
 #define SYSTEMCOREFREQ 48000000U        // System Clock Frequency
 
-void timerInit(void) {
+void TIM_init(void) {
 	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // TIM2 clock enable
 	TIM3->PSC = 24000-1; // prescaler for 500us delay
 	TIM3->CR1 |= TIM_CR1_OPM; // one pulse mode
-    delay_ms(10);
+    TIM_delayMs(10);
 }
 
-void delay_ms(uint16_t value) {
+void TIM_delayMs(uint16_t value) {
 	TIM3->ARR = (value-1)*2;
 	TIM3->CNT = 0;
 	TIM3->CR1 |= TIM_CR1_CEN; // start timer
@@ -18,7 +18,7 @@ void delay_ms(uint16_t value) {
 	TIM3->SR &= ~TIM_SR_UIF; // reset flag
 }
 
-void delay_us(uint32_t micros) {
+void TIM_delayUs(uint32_t micros) {
 	micros *= (SYSTEMCOREFREQ / 1000000) / 10;
 	while (micros--);
 }

@@ -11,7 +11,7 @@
 
 __IO uint32_t tmpreg;
 
-void I2C1_Init(void) {
+void I2C1_init(void) {
     // enable port A
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
 
@@ -55,7 +55,7 @@ uint8_t I2C1_TX_empty() {
     return ((I2C1->ISR & I2C_ISR_TXE) == (I2C_ISR_TXE));
 }
 
-void I2C1_WriteBytes(uint16_t addr, uint8_t *buf, uint16_t bytes_count) {
+void I2C1_writeBytes(uint16_t addr, uint8_t *buf, uint16_t bytes_count) {
     // Write data
     uint32_t i = 0;
     for(i = 0; i < bytes_count; i++) {
@@ -65,5 +65,5 @@ void I2C1_WriteBytes(uint16_t addr, uint8_t *buf, uint16_t bytes_count) {
     }
 }
 
-void I2C1_ReadBytes(uint16_t addr, uint8_t *buf, uint16_t bytes_count) {
+void I2C1_readBytes(uint16_t addr, uint8_t *buf, uint16_t bytes_count) {
 }

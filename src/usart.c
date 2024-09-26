@@ -1,5 +1,7 @@
 #include "stm32f0xx.h"
 #include "usart.h"
+#include "tm1637.h"
+#include "flash.h"
 #include <stdio.h>
 #include "gpio.h"
 
@@ -13,7 +15,27 @@ enum DMX_STATES {
 };
 enum DMX_STATES dmxState; // current DMX reception state
 
-void USART1_Init() {
+void _setDmxAddress(uint16_t addr) {
+    if (addr <= DMX_ADDRESS_MIN) {
+        addr = DMX_ADDRESS_MAX;
+    } else if (addr >= DMX_ADDRESS_MAX) {
+        addr = DMX_ADDRESS_MIN;
+    }
+
+    dmxAddress = addr;
+
+    // Write DMX address to flash memory
+    FLASH_writeOne(addr);
+
+    // Update indicator data to display actual DMX address
+    TM1637_displayDecimal(addr, 0);
+}
+
+uint16_t _getDmxAddress(void) {
+    return dmxAddress;
+}
+
+void USART1_init() {
     //PINs init
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // port A enable
 
@@ -45,7 +67,11 @@ void USART1_Init() {
     USART1->CR1 = USART_CR1_RE | USART_CR1_UE;
 
     dmxState = IDLE;
-    dmxAddress = 1;
+
+    // Read DMX address from flash memory and set
+    _setDmxAddress(FLASH_readOne());
+
+    // Clean buffer
     for (uint8_t i = 0; i < DMX_CHANNELS_NUM; i++) dmxBuffer[i] = 0;
 
     // receive interrupt inable
@@ -53,17 +79,42 @@ void USART1_Init() {
     NVIC_EnableIRQ(USART1_IRQn);
 }
 
-void USART1_Send_Byte(unsigned char ucSend_Data) {
+void USART1_sendByte(unsigned char ucSend_Data) {
     USART1->TDR = ucSend_Data & 0x01FF;
     while ((USART1->ISR & USART_ISR_TC) != USART_ISR_TC);
 }
 
-uint8_t* get_Dmx_Bufer_ptr(void) {
-    return dmxBuffer;
+void USART1_sendString(char *pucString) {
+    while(*pucString!='\0') {
+        USART1_sendByte(*pucString);
+        pucString++;
+    }
 }
 
-void set_Dmx_Address(uint8_t addr) {
-    dmxAddress = addr;
+void USART1_sendUInt(uint32_t number) {
+    char str[8] = "";
+    sprintf(str, "%lu", number);
+    USART1_sendString(str);
+}
+
+// uint8_t* getDmxBuferPtr(void) {
+//     return dmxBuffer;
+// }
+
+void USART1_incDmxAddress(void) {
+    _setDmxAddress(_getDmxAddress() + 1);
+}
+
+void USART1_decDmxAddress(void) {
+    _setDmxAddress(_getDmxAddress() - 1);
+}
+
+void USART1_inc10DmxAddress(void) {
+    _setDmxAddress(_getDmxAddress() + 10);
+}
+
+void USART1_dec10DmxAddress(void) {
+    _setDmxAddress(_getDmxAddress() - 10);
 }
 
 // DMX 512 receiver
@@ -94,31 +145,18 @@ void USART1_IRQHandler()
                     dmxState = IDLE; // not addressed to us - wait for BREAK
                 }
             } else if (dmxState == DATA_RECEIVE) {
-                status_led_on();
-                if ((dmxFrameNum >= dmxAddress) && (dmxFrameNum < (dmxAddress + DMX_CHANNELS_NUM))) { // addressed to us
-                    uint8_t n = dmxFrameNum - dmxAddress;
+                GPIO_statusLedOn();
+                if ((dmxFrameNum >= _getDmxAddress()) && (dmxFrameNum < (_getDmxAddress() + DMX_CHANNELS_NUM))) { // addressed to us
+                    uint8_t n = dmxFrameNum - _getDmxAddress();
                     if (n < DMX_CHANNELS_NUM) {
                         dmxBuffer[n] = byte;
                     }
                 }
                 dmxFrameNum++;
-                status_led_off();
+                GPIO_statusLedOff();
             }
         }
     }
 
     USART1->CR1 |= USART_CR1_RXNEIE; // receive interrupt enable 
-}
-
-void USART1_Send_String(char *pucString) {
-    while(*pucString!='\0') {
-        USART1_Send_Byte(*pucString);
-        pucString++;
-    }
-}
-
-void USART1_Send_uInt(uint32_t number) {
-    char str[8] = "";
-    sprintf(str, "%lu", number);
-    USART1_Send_String(str);
 }

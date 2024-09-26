@@ -9,10 +9,10 @@
 #define STM32F0xx_FLASH_PAGE15_STARTADDR (STM32F0xx_FLASH_PAGE0_STARTADDR+15*STM32F0xx_PAGE_SIZE)
 #define ADDR STM32F0xx_FLASH_PAGE15_STARTADDR // 0x08003C00
 
-uint8_t FLASH_Erase_Page(uint32_t address);
-uint8_t FLASH_Write(uint32_t address,uint32_t data);
-uint32_t FLASH_Read(uint32_t flash_addr);
-uint32_t FLASH_Read_One();
-uint8_t FLASH_Write_One(uint32_t data);
+uint8_t FLASH_erasePage(uint32_t address);
+uint8_t FLASH_write(uint32_t address,uint32_t data);
+uint32_t FLASH_read(uint32_t flash_addr);
+uint32_t FLASH_readOne();
+uint8_t FLASH_writeOne(uint32_t data);
 
 #endif
