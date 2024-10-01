@@ -4,6 +4,12 @@
 #include "flash.h"
 #include <stdio.h>
 #include "gpio.h"
+#include "pca9685.h"
+
+#define DMX_START_CODE 0 // DMX512 start code to react to (0 is for dimmers)
+#define DMX_CHANNELS_NUM 4 // maximum number of channels supported by hardware
+#define DMX_ADDRESS_MIN 0
+#define DMX_ADDRESS_MAX 255
 
 uint16_t dmxAddress; // DMX512 base address
 uint8_t dmxBuffer[DMX_CHANNELS_NUM];
@@ -15,10 +21,8 @@ enum DMX_STATES {
 };
 enum DMX_STATES dmxState; // current DMX reception state
 
-void _setDmxAddress(uint16_t addr) {
-    if (addr <= DMX_ADDRESS_MIN) {
-        addr = DMX_ADDRESS_MAX;
-    } else if (addr >= DMX_ADDRESS_MAX) {
+void _USART1_setDmxAddress(uint16_t addr) {
+    if (addr > DMX_ADDRESS_MAX) {
         addr = DMX_ADDRESS_MIN;
     }
 
@@ -31,7 +35,7 @@ void _setDmxAddress(uint16_t addr) {
     TM1637_displayDecimal(addr, 0);
 }
 
-uint16_t _getDmxAddress(void) {
+uint16_t _USART1_getDmxAddress(void) {
     return dmxAddress;
 }
 
@@ -69,7 +73,7 @@ void USART1_init() {
     dmxState = IDLE;
 
     // Read DMX address from flash memory and set
-    _setDmxAddress(FLASH_readOne());
+    _USART1_setDmxAddress(FLASH_readOne());
 
     // Clean buffer
     for (uint8_t i = 0; i < DMX_CHANNELS_NUM; i++) dmxBuffer[i] = 0;
@@ -97,24 +101,24 @@ void USART1_sendUInt(uint32_t number) {
     USART1_sendString(str);
 }
 
-// uint8_t* getDmxBuferPtr(void) {
-//     return dmxBuffer;
-// }
-
-void USART1_incDmxAddress(void) {
-    _setDmxAddress(_getDmxAddress() + 1);
+void USART1_incDmxAddress() {
+    _USART1_setDmxAddress(_USART1_getDmxAddress() + 1);
 }
 
-void USART1_decDmxAddress(void) {
-    _setDmxAddress(_getDmxAddress() - 1);
+void USART1_decDmxAddress() {
+    _USART1_setDmxAddress(_USART1_getDmxAddress() - 1);
 }
 
-void USART1_inc10DmxAddress(void) {
-    _setDmxAddress(_getDmxAddress() + 10);
+void USART1_inc10DmxAddress() {
+    _USART1_setDmxAddress(_USART1_getDmxAddress() + 10);
 }
 
-void USART1_dec10DmxAddress(void) {
-    _setDmxAddress(_getDmxAddress() - 10);
+void USART1_dec10DmxAddress() {
+    _USART1_setDmxAddress(_USART1_getDmxAddress() - 10);
+}
+
+void _USART1_updatePCA9685Outputs() {
+    PCA9685_setOutputs(dmxBuffer, DMX_CHANNELS_NUM);
 }
 
 // DMX 512 receiver
@@ -146,14 +150,17 @@ void USART1_IRQHandler()
                 }
             } else if (dmxState == DATA_RECEIVE) {
                 GPIO_statusLedOn();
-                if ((dmxFrameNum >= _getDmxAddress()) && (dmxFrameNum < (_getDmxAddress() + DMX_CHANNELS_NUM))) { // addressed to us
-                    uint8_t n = dmxFrameNum - _getDmxAddress();
+                if ((dmxFrameNum >= _USART1_getDmxAddress()) && (dmxFrameNum < (_USART1_getDmxAddress() + DMX_CHANNELS_NUM))) { // addressed to us
+                    uint8_t n = dmxFrameNum - _USART1_getDmxAddress();
                     if (n < DMX_CHANNELS_NUM) {
                         dmxBuffer[n] = byte;
                     }
                 }
                 dmxFrameNum++;
                 GPIO_statusLedOff();
+                if (dmxFrameNum == (_USART1_getDmxAddress() + DMX_CHANNELS_NUM)) {
+                    _USART1_updatePCA9685Outputs();
+                }
             }
         }
     }

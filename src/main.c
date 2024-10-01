@@ -6,13 +6,14 @@
 #include "usart.h"
 #include "tm1637.h"
 #include "i2c.h"
+#include "pca9685.h"
 
 #define KEY_INC KEY_MATRIX_S16
 #define KEY_DEC KEY_MATRIX_S15
 #define KEY_BOTH (KEY_INC & KEY_DEC)
 #define KEY_ANTINOIZE_COUNT 4
 #define KEY_ANTINOIZE_DELAY_MS 8
-#define KEY_STEPS_TO_SPEEDUP 15
+#define KEY_STEPS_TO_SPEEDUP 12
 #define KEY_ACTION_DELAY_MS 200
 
 void _processKeys(void) {
@@ -61,18 +62,16 @@ int main(void) {
     RCC_init();
     GPIO_init();
     TIM_init();
-    TIM_delayMs(1000);
+    TIM_delayMs(100);
 
     TM1637_init();
-    TM1637_setBrightness(4);
+    TM1637_setBrightness(2);
+    I2C1_init(400E3); // 400kHz
+    PCA9685_init();
     USART1_init();
-    I2C1_init();
 
     for(;;) {
         _processKeys();
-
-        // I2C1_WriteBytes(1, dmxBuf, 1);
-        // TIM_delayMs(100);
         WDG_reset();
     }
 }

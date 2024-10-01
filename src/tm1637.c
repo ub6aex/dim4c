@@ -8,105 +8,105 @@ const char segmentMap[] = {
     0x00
 };
 
-void _setClkHigh(void) {
+void _TM1637_setClkHigh(void) {
     GPIOA->BSRR = GPIO_BSRR_BS_0;
 }
 
-void _setClkLow(void) {
+void _TM1637_setClkLow(void) {
     GPIOA->BSRR = GPIO_BSRR_BR_0;
 }
 
-void _setDioHigh(void) {
+void _TM1637_setDioHigh(void) {
     GPIOA->BSRR = GPIO_BSRR_BS_1;
 }
 
-void _setDioLow(void) {
+void _TM1637_setDioLow(void) {
     GPIOA->BSRR = GPIO_BSRR_BR_1;
 }
 
-void _setDioOutputMode(void) {
+void _TM1637_setDioOutputMode(void) {
     GPIOA->MODER |= GPIO_MODER_MODER1_0;
     GPIOA->MODER &= ~GPIO_MODER_MODER1_1;
 }
 
-void _setDioInputMode(void) {
+void _TM1637_setDioInputMode(void) {
     GPIOA->MODER &= ~GPIO_MODER_MODER1;
 }
 
-void _sendStart(void) {
-    _setClkHigh();
-    _setDioHigh();
+void _TM1637_sendStart(void) {
+    _TM1637_setClkHigh();
+    _TM1637_setDioHigh();
     TIM_delayUs(2);
-    _setDioLow();
+    _TM1637_setDioLow();
 }
 
-void _sendStop(void) {
-    _setClkLow();
+void _TM1637_sendStop(void) {
+    _TM1637_setClkLow();
     TIM_delayUs(2);
-    _setDioLow();
+    _TM1637_setDioLow();
     TIM_delayUs(2);
-    _setClkHigh();
+    _TM1637_setClkHigh();
     TIM_delayUs(2);
-    _setDioHigh();
+    _TM1637_setDioHigh();
 }
 
-void _readACK(void) {
-    _setClkLow();
+void _TM1637_readACK(void) {
+    _TM1637_setClkLow();
     TIM_delayUs(5);
     // while (dio); // We're cheating here and not actually reading back the response.
-    _setClkHigh();
+    _TM1637_setClkHigh();
     TIM_delayUs(2);
-    _setClkLow();
+    _TM1637_setClkLow();
 }
 
-void _writeByte(unsigned char b) {
+void _TM1637_writeByte(unsigned char b) {
     for (int i = 0; i < 8; ++i) {
-        _setClkLow();
+        _TM1637_setClkLow();
         if (b & 0x01) {
-            _setDioHigh();
+            _TM1637_setDioHigh();
         }
         else {
-            _setDioLow();
+            _TM1637_setDioLow();
         }
         TIM_delayUs(3);
         b >>= 1;
-        _setClkHigh();
+        _TM1637_setClkHigh();
         TIM_delayUs(3);
     }
 }
 
-void _sendWriteDataCommand(void) {
-    _sendStart();
-    _writeByte(0x40);
-    _readACK();
-    _sendStop();
+void _TM1637_sendWriteDataCommand(void) {
+    _TM1637_sendStart();
+    _TM1637_writeByte(0x40);
+    _TM1637_readACK();
+    _TM1637_sendStop();
 }
 
-void _sendReadKeyScanCommand(void) {
-    _sendStart();
-    _writeByte(0x42);
-    _readACK();
-    _sendStop();
+void _TM1637_sendReadKeyScanCommand(void) {
+    _TM1637_sendStart();
+    _TM1637_writeByte(0x42);
+    _TM1637_readACK();
+    _TM1637_sendStop();
 }
 
-void _clearIndicator(void) {
-    _sendWriteDataCommand();
+void _TM1637_clearIndicator(void) {
+    _TM1637_sendWriteDataCommand();
 
     // Send display address command to set address C0H
-    _sendStart();
-    _writeByte(0xc0);
-    _readACK();
+    _TM1637_sendStart();
+    _TM1637_writeByte(0xc0);
+    _TM1637_readACK();
 
     // Send data
     for (int i = 0; i < MAX_DIGITS; i++) {
-        _writeByte(0);
-        _readACK();
+        _TM1637_writeByte(0);
+        _TM1637_readACK();
     }
 
-    _sendStop();
+    _TM1637_sendStop();
 }
 
-int _pow(int base, int power) {
+int _TM1637_pow(int base, int power) {
     int res = base;
     for (int i = 1; i < power; i++) {
         res = res * res;
@@ -126,11 +126,11 @@ void TM1637_init(void) {
 
     // DIO
     // GPIO A1 output open-drain
-    _setDioOutputMode();
+    _TM1637_setDioOutputMode();
     GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR1;
     GPIOA->PUPDR &= ~GPIO_PUPDR_PUPDR1;
 
-    _clearIndicator();
+    _TM1637_clearIndicator();
     TM1637_setBrightness(8);
 }
 
@@ -142,10 +142,10 @@ void TM1637_setBrightness(uint8_t brightness) {
     // 1000 1BBB = display on, brightness 0-7
     // X = don't care
     // B = brightness
-    _sendStart();
-    _writeByte(0x87 + brightness);
-    _readACK();
-    _sendStop();
+    _TM1637_sendStart();
+    _TM1637_writeByte(0x87 + brightness);
+    _TM1637_readACK();
+    _TM1637_sendStop();
 }
 
 void TM1637_displayDecimal(uint16_t value, uint8_t displaySeparator) {
@@ -161,47 +161,47 @@ void TM1637_displayDecimal(uint16_t value, uint8_t displaySeparator) {
 
     // Remove trailing zeros
     for (int i = 1; i < NUM_OF_DIGITS; i++) {
-        if(value < _pow(10,i)) {
+        if(value < _TM1637_pow(10,i)) {
             digitArr[i] = segmentMap[16];
         }
     }
 
-    _sendWriteDataCommand();
+    _TM1637_sendWriteDataCommand();
 
     // Send display address command to set address C0H
-    _sendStart();
-    _writeByte(0xc0);
-    _readACK();
+    _TM1637_sendStart();
+    _TM1637_writeByte(0xc0);
+    _TM1637_readACK();
 
     // Send data
     for (int i = 1; i <= NUM_OF_DIGITS; i++) {
-        _writeByte(digitArr[NUM_OF_DIGITS - i]);
-        _readACK();
+        _TM1637_writeByte(digitArr[NUM_OF_DIGITS - i]);
+        _TM1637_readACK();
     }
-    _sendStop();
+    _TM1637_sendStop();
 }
 
 // Read keys matrix
 uint8_t TM1637_readInputs(void) {
-    _sendStart();
-    _writeByte(0x42);
-    _readACK();
+    _TM1637_sendStart();
+    _TM1637_writeByte(0x42);
+    _TM1637_readACK();
 
     uint8_t keys = 0;
-    _setDioInputMode();
+    _TM1637_setDioInputMode();
     for (int i = 0; i < 8; i++) {
         keys <<= 1;
-        _setClkLow();
+        _TM1637_setClkLow();
         TIM_delayUs(30);
         if ((GPIOA->IDR & GPIO_IDR_1)) {
             keys++;
         }
-        _setClkHigh();
+        _TM1637_setClkHigh();
         TIM_delayUs(30);
     }
 
-    _setDioOutputMode();
-    _readACK();
-    _sendStop();
+    _TM1637_setDioOutputMode();
+    _TM1637_readACK();
+    _TM1637_sendStop();
     return keys;
 }
