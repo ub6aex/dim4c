@@ -2,8 +2,14 @@
 #include "gpio.h"
 
 void GPIO_init(void) {
-    RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+    RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // enable port A
+
+    /*
+     * Status LED is connectd to port A4.
+     * Set GPIO A4 as general purpose output.
+     */
     GPIOA->MODER |= GPIO_MODER_MODER4_0;
+    GPIOA->MODER &= ~GPIO_MODER_MODER4_1;
     GPIO_statusLedOff();
 }
 

@@ -22,9 +22,8 @@ enum DMX_STATES {
 enum DMX_STATES dmxState; // current DMX reception state
 
 void _USART1_setDmxAddress(uint16_t addr) {
-    if (addr > DMX_ADDRESS_MAX) {
+    if (addr > DMX_ADDRESS_MAX)
         addr = DMX_ADDRESS_MIN;
-    }
 
     dmxAddress = addr;
 
@@ -76,7 +75,8 @@ void USART1_init() {
     _USART1_setDmxAddress(FLASH_readOne());
 
     // Clean buffer
-    for (uint8_t i = 0; i < DMX_CHANNELS_NUM; i++) dmxBuffer[i] = 0;
+    for (uint8_t i = 0; i < DMX_CHANNELS_NUM; i++)
+        dmxBuffer[i] = 0;
 
     // receive interrupt inable
     USART1->CR1 |= USART_CR1_RXNEIE;
@@ -121,7 +121,12 @@ void _USART1_updatePCA9685Outputs() {
     PCA9685_setOutputs(dmxBuffer, DMX_CHANNELS_NUM);
 }
 
-// DMX 512 receiver
+/*
+ * DMX 512 receiver:
+ * - get DMX512 packet
+ * - populate dmxBuffer as per DMX address
+ * - send data to PCA9685
+*/
 void USART1_IRQHandler()
 {
     USART1->CR1 &= ~USART_CR1_RXNEIE; // receive interrupt disable 
@@ -134,33 +139,29 @@ void USART1_IRQHandler()
         uint8_t byte = (uint8_t)(USART1->RDR); // catch data from RDR register to enable reception of the next byte
         uint8_t framingError = USART1->ISR & USART_ISR_FE;
         if (framingError) {
-            if (byte == 0) { // it's a BREAK
+            if (byte == 0) // it's a BREAK
                 dmxState = BREAK; // valid BREAK, ready for reception of Start Code)
-            } else {
+            else
                 dmxState = IDLE; // error: bits set during BREAK - set inactive until next BREAK
-            }
             USART1->ICR |= USART_ICR_FECF; // clear FE
         } else { // valid byte detected
             if (dmxState == BREAK) {
                 if (byte == DMX_START_CODE) { // valid Start Code detected
                     dmxState = DATA_RECEIVE;
                     dmxFrameNum = 1;
-                } else {
+                } else
                     dmxState = IDLE; // not addressed to us - wait for BREAK
-                }
             } else if (dmxState == DATA_RECEIVE) {
                 GPIO_statusLedOn();
                 if ((dmxFrameNum >= _USART1_getDmxAddress()) && (dmxFrameNum < (_USART1_getDmxAddress() + DMX_CHANNELS_NUM))) { // addressed to us
                     uint8_t n = dmxFrameNum - _USART1_getDmxAddress();
-                    if (n < DMX_CHANNELS_NUM) {
+                    if (n < DMX_CHANNELS_NUM)
                         dmxBuffer[n] = byte;
-                    }
+                    if (n == (DMX_CHANNELS_NUM - 1))
+                        _USART1_updatePCA9685Outputs();
                 }
                 dmxFrameNum++;
                 GPIO_statusLedOff();
-                if (dmxFrameNum == (_USART1_getDmxAddress() + DMX_CHANNELS_NUM)) {
-                    _USART1_updatePCA9685Outputs();
-                }
             }
         }
     }

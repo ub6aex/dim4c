@@ -1,6 +1,8 @@
 #include "stm32f0xx.h"
 #include "flash.h"
 
+#define FLASH_KEY1 ((uint32_t)0x45670123)
+#define FLASH_KEY2 ((uint32_t)0xCDEF89AB)
 #define STM32F0xx_PAGE_SIZE 0x400
 #define STM32F0xx_FLASH_PAGE0_STARTADDR 0x8000000
 #define STM32F0xx_FLASH_PAGE15_STARTADDR (STM32F0xx_FLASH_PAGE0_STARTADDR+15*STM32F0xx_PAGE_SIZE)
@@ -52,7 +54,8 @@ uint8_t FLASH_write(uint32_t flash_addr, uint32_t data) {
     FLASH->CR |= FLASH_CR_PG; // Set the PG bit in the FLASH_CR register to enable programming
     *(__IO uint16_t*)flash_addr = (uint16_t)data; // write two L bytes
     while(!FLASH_ready()); // wait
-    if(!FLASH_checkEOP()) return 0;
+    if(!FLASH_checkEOP())
+        return 0;
 
     flash_addr+=2;
     data>>=16;

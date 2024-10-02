@@ -3,9 +3,6 @@
 
 #include "stm32f0xx.h"
 
-#define NUM_OF_DIGITS 3 // Number of digits on 7-segment indicator.
-#define MAX_DIGITS 6 // Maximum digits tm1637 supports.
-
 #define KEY_MATRIX_NO_KEYS_PRESSED 0b11111111
 #define KEY_MATRIX_S1 0b11101111
 #define KEY_MATRIX_S2 0b11110111

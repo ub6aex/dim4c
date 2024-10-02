@@ -1,10 +1,10 @@
 #include "stm32f0xx.h"
 #include "tim.h"
 
-#define SYSTEMCOREFREQ 48000000U        // System Clock Frequency
+#define SYSTEMCOREFREQ 48000000U // System Clock Frequency
 
 void TIM_init(void) {
-	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // TIM2 clock enable
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // TIM3 clock enable
 	TIM3->PSC = 24000-1; // prescaler for 500us delay
 	TIM3->CR1 |= TIM_CR1_OPM; // one pulse mode
     TIM_delayMs(10);

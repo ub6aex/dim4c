@@ -1,14 +1,13 @@
 /*
-    https://github.com/EZdenki/STM32F030-CMSIS-I2C-lib
-*/
+ *https://github.com/EZdenki/STM32F030-CMSIS-I2C-lib
+ */
 
 #include "stm32f0xx.h"
 #include "tim.h"
 #include "i2c.h"
 
 void I2C1_init(uint32_t speed) {
-    // enable port A
-    RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+    RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // enable port A
 
     // SCL
     GPIOA->OTYPER |= GPIO_OTYPER_OT_9; // open drain
@@ -133,9 +132,8 @@ void I2C1_writeBytes(uint8_t deviceAddr, uint8_t registerAddr, uint8_t *sendBuf,
 
     _I2C1_writeByte(registerAddr);
     uint8_t i;
-    for(i = 0; i < bytesCount; i++) {
+    for(i = 0; i < bytesCount; i++)
         _I2C1_writeByte(sendBuf[i]);
-    }
     _I2C1_sendStop();
 }
 
@@ -153,9 +151,8 @@ void I2C1_readBytes(uint8_t deviceAddr, uint8_t registerAddr, uint8_t *readBuf, 
     _I2C1_sendStart(); // restart
 
     uint8_t i;
-    for(i = 0; i < bytesCount; i++) {
+    for(i = 0; i < bytesCount; i++)
         readBuf[i] = _I2C1_readByte();
-    }
     _I2C1_sendStop();
     _I2C1_setWriteMode();
 }

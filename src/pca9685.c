@@ -10,7 +10,7 @@
 #define LED0_ON_L 0x06
 
 void PCA9685_init() {
-    uint8_t mode1 = 0b00110001; // AllCALL, SLEEP, AI
+    uint8_t mode1 = 0b00110001; // SLEEP, AI, ALLCALL
     I2C1_writeBytes(0x40, PCA9685_MODE1, &mode1, 1);
 
     uint8_t mode2 = 0b00000100; // OUTDRV
@@ -28,28 +28,28 @@ void PCA9685_init() {
     I2C1_writeBytes(0x40, PCA9685_ALL_LED_ON_L, allLedOff, 4);
 
     // Wakeup
-    uint8_t mode1reset = 0b10100001; // AllCALL, AI, RESTART
+    uint8_t mode1reset = 0b10100001; // RESTART, AI, ALLCALL
     I2C1_writeBytes(0x40, PCA9685_MODE1, &mode1reset, 1);
     TIM_delayMs(5);
 };
 
 void PCA9685_setOutputs(uint8_t *values, uint8_t length) {
-    uint8_t sendBuf[length*4];
+    uint8_t buf[length*4];
 
     uint8_t i;
     for(i = 0; i < length; i++) {
         if (values[i] == 255) {
-            sendBuf[i*4] = 0x00;
-            sendBuf[i*4+1] = 0x10;
-            sendBuf[i*4+2] = 0x00;
-            sendBuf[i*4+3] = 0x00;
+            buf[i*4] = 0x00;
+            buf[i*4+1] = 0x10;
+            buf[i*4+2] = 0x00;
+            buf[i*4+3] = 0x00;
         } else {
-            sendBuf[i*4] = 0x00;
-            sendBuf[i*4+1] = 0x00;
-            sendBuf[i*4+2] = values[i] << 4;
-            sendBuf[i*4+3] = values[i] >> 4;
+            buf[i*4] = 0x00;
+            buf[i*4+1] = 0x00;
+            buf[i*4+2] = values[i] << 4;
+            buf[i*4+3] = values[i] >> 4;
         }
     }
 
-    I2C1_writeBytes(0x40, LED0_ON_L, sendBuf, length*4);
+    I2C1_writeBytes(0x40, LED0_ON_L, buf, length*4);
 }
