@@ -1,0 +1,13 @@
+Status LED:
+    cathode - PA4
+
+UART input:
+    PA3
+
+TM1637:
+    CLK - PA0
+    DIO - PA1
+
+PCA9685:
+    CLK - PA9
+    SDA - PA10
