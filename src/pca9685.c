@@ -9,7 +9,7 @@
 #define PCA9685_ALL_LED_ON_L 0xFA
 #define LED0_ON_L 0x06
 
-void PCA9685_init() {
+void PCA9685_init(void) {
     uint8_t mode1 = 0b00110001; // SLEEP, AI, ALLCALL
     I2C1_writeBytes(0x40, PCA9685_MODE1, &mode1, 1);
 

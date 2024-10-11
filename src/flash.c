@@ -66,7 +66,7 @@ uint8_t FLASH_write(uint32_t flash_addr, uint32_t data) {
     return FLASH_checkEOP();
 }
 
-uint32_t FLASH_readOne() {
+uint32_t FLASH_readOne(void) {
     return FLASH_read(ADDR);
 }
 

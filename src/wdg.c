@@ -9,6 +9,6 @@ void WDG_init(uint16_t ms) {
     IWDG->KR=0xCCCC; // enable wdg
 }
 
-void WDG_reset() {
+void WDG_reset(void) {
     IWDG->KR=0xAAAA; // reset timer
 }

@@ -3,6 +3,7 @@
         "stdint.h": "c",
         "gpio.h": "c",
         "stm32f0xx.h": "c",
-        "usart.h": "c"
+        "usart.h": "c",
+        "stdio.h": "c"
     }
 }

@@ -11,3 +11,6 @@ TM1637:
 PCA9685:
     CLK - PA9
     SDA - PA10
+
+Output LEDs:
+    PA5, PA6, PA7, B1

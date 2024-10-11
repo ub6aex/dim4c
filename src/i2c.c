@@ -75,13 +75,13 @@ void _I2C1_setAddress(uint8_t address) {
 }
 
 // Set the start bit and wait for acknowledge that it was set.
-void _I2C1_sendStart() {
+void _I2C1_sendStart(void) {
     I2C1->CR2 |= I2C_CR2_START; // Set START bit in I2C CR2 register
     while(I2C1->CR2 & I2C_CR2_START); // Wait until START bit is cleared
 }
 
 // Set and then clear the stop bit.
-void _I2C1_sendStop() {
+void _I2C1_sendStop(void) {
     I2C1->CR2 |= I2C_CR2_STOP; // Set STOP bit in I2C CR2 register
     while(I2C1->CR2 & I2C_CR2_STOP); // Wait until STOP bit is cleared
 
@@ -98,12 +98,12 @@ void _I2C1_setNBytes(uint8_t nBytes) {
 }
 
 // Set the I2C interface into the read mode.
-void _I2C1_setReadMode() {
+void _I2C1_setReadMode(void) {
     I2C1->CR2 |= I2C_CR2_RD_WRN; // Set I2C interface to read operation
 }
 
 // Set the I2C interface into the write mode.
-void _I2C1_setWriteMode() {
+void _I2C1_setWriteMode(void) {
     I2C1->CR2 &= ~I2C_CR2_RD_WRN; // Restore read/write bit to write
 }
 
@@ -118,7 +118,7 @@ void _I2C1_writeByte(uint8_t data) {
 }
 
 // Read a byte from the I2C interface.
-uint8_t _I2C1_readByte() {
+uint8_t _I2C1_readByte(void) {
     while(!(I2C1->ISR & I2C_ISR_RXNE)); // Wait for byte to appear
     uint8_t result = I2C1->RXDR & 0xFF; // Read received byte
     return result;

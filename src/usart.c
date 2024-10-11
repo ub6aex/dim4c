@@ -7,7 +7,6 @@
 #include "pca9685.h"
 
 #define DMX_START_CODE 0 // DMX512 start code to react to (0 is for dimmers)
-#define DMX_CHANNELS_NUM 4 // maximum number of channels supported by hardware
 #define DMX_ADDRESS_MIN 0
 #define DMX_ADDRESS_MAX 255
 
@@ -38,7 +37,11 @@ uint16_t _USART1_getDmxAddress(void) {
     return dmxAddress;
 }
 
-void USART1_init() {
+uint8_t* USART1_getDmxBuffer(void) {
+    return dmxBuffer;
+}
+
+void USART1_init(void) {
     //PINs init
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // port A enable
 
@@ -101,23 +104,23 @@ void USART1_sendUInt(uint32_t number) {
     USART1_sendString(str);
 }
 
-void USART1_incDmxAddress() {
+void USART1_incDmxAddress(void) {
     _USART1_setDmxAddress(_USART1_getDmxAddress() + 1);
 }
 
-void USART1_decDmxAddress() {
+void USART1_decDmxAddress(void) {
     _USART1_setDmxAddress(_USART1_getDmxAddress() - 1);
 }
 
-void USART1_inc10DmxAddress() {
+void USART1_inc10DmxAddress(void) {
     _USART1_setDmxAddress(_USART1_getDmxAddress() + 10);
 }
 
-void USART1_dec10DmxAddress() {
+void USART1_dec10DmxAddress(void) {
     _USART1_setDmxAddress(_USART1_getDmxAddress() - 10);
 }
 
-void _USART1_updatePCA9685Outputs() {
+void _USART1_updatePCA9685Outputs(void) {
     PCA9685_setOutputs(dmxBuffer, DMX_CHANNELS_NUM);
 }
 
@@ -127,8 +130,7 @@ void _USART1_updatePCA9685Outputs() {
  * - populate dmxBuffer as per DMX address
  * - send data to PCA9685
 */
-void USART1_IRQHandler()
-{
+void USART1_IRQHandler(void) {
     USART1->CR1 &= ~USART_CR1_RXNEIE; // receive interrupt disable 
 
     uint8_t overrunError = USART1->ISR & USART_ISR_ORE;
