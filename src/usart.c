@@ -50,11 +50,14 @@ void USART1_init(void) {
     GPIOA->MODER |= GPIO_MODER_MODER3_1;
 
     // TX
-    GPIOA->MODER &= ~GPIO_MODER_MODER2_0;
-    GPIOA->MODER |= GPIO_MODER_MODER2_1;
+    // Do not use TX line, so it can be used as GPIO.
+    // GPIOA->MODER &= ~GPIO_MODER_MODER2_0;
+    // GPIOA->MODER |= GPIO_MODER_MODER2_1;
 
     // AF1 for USART1 signals
-    GPIOA->AFR[0] = (GPIOA->AFR[0] &~ (GPIO_AFRL_AFRL2 | GPIO_AFRL_AFRL3)) | (1 << (2 * 4)) | (1 << (3 * 4));
+    // Do not use TX line, so it can be used as GPIO.
+    // GPIOA->AFR[0] = (GPIOA->AFR[0] &~ (GPIO_AFRL_AFRL2 | GPIO_AFRL_AFRL3)) | (1 << (2 * 4)) | (1 << (3 * 4));
+    GPIOA->AFR[0] = (GPIOA->AFR[0] &~ GPIO_AFRL_AFRL3) | (1 << (3 * 4));
 
     // HSI clock as USART1 clock
     RCC->CFGR3 |= RCC_CFGR3_USART1SW;
@@ -69,7 +72,6 @@ void USART1_init(void) {
     USART1->CR2 |= USART_CR2_STOP_1;
 
     // enable USART1
-    // USART1->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
     USART1->CR1 = USART_CR1_RE | USART_CR1_UE;
 
     dmxState = IDLE;

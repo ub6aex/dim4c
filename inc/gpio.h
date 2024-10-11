@@ -8,4 +8,6 @@ void GPIO_statusLedOff(void);
 void GPIO_outLedOn(uint8_t num);
 void GPIO_outLedOff(uint8_t num);
 
+uint8_t GPIO_inputState(void);
+
 #endif

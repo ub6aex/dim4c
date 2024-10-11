@@ -61,6 +61,11 @@ void GPIO_init(void) {
     GPIOB->MODER |= GPIO_MODER_MODER1_0;
     GPIOB->MODER &= ~GPIO_MODER_MODER1_1;
     _GPIO_out4LedOff();
+
+    // PA2 input
+    GPIOA->MODER &= ~GPIO_MODER_MODER2; // input
+    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPDR2; // No pull-up and no pull-down
+    GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEEDR2; // max speed
 }
 
 void GPIO_statusLedOn(void) {
@@ -107,4 +112,8 @@ void GPIO_outLedOff(uint8_t num) {
     default:
         break;
     }
+}
+
+uint8_t GPIO_inputState(void) {
+    return GPIOA->IDR & GPIO_IDR_2;
 }

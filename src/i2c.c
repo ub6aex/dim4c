@@ -12,10 +12,12 @@ void I2C1_init(uint32_t speed) {
     // SCL
     GPIOA->OTYPER |= GPIO_OTYPER_OT_9; // open drain
     GPIOA->PUPDR &= ~GPIO_PUPDR_PUPDR9; // No pull-up and no pull-down
+    GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEEDR9; // max speed
 
     // SDA
     GPIOA->OTYPER |= GPIO_OTYPER_OT_10; // open drain
     GPIOA->PUPDR &= ~GPIO_PUPDR_PUPDR10; // No pull-up and no pull-down
+    GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEEDR10; // max speed
 
     // Select Alternate Function mode (10) on PA9 and PA10
     GPIOA->MODER &= ~GPIO_MODER_MODER9_0;

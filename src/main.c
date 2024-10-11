@@ -11,8 +11,8 @@
 #define KEY_INC KEY_MATRIX_S16
 #define KEY_DEC KEY_MATRIX_S15
 #define KEY_BOTH (KEY_INC & KEY_DEC)
-#define KEY_ANTINOIZE_COUNT 4
-#define KEY_ANTINOIZE_DELAY_MS 8
+#define KEY_ANTINOISE_COUNT 4
+#define KEY_ANTINOISE_DELAY_MS 8
 #define KEY_STEPS_TO_SPEEDUP 12
 #define KEY_ACTION_DELAY_MS 200
 
@@ -22,11 +22,11 @@ void _processKeys(void) {
         int actionsCount = 0;
         uint8_t keyState = keys;
         do {
-            for (int i = 0; i <= KEY_ANTINOIZE_COUNT; i++) {
-                TIM_delayMs(KEY_ANTINOIZE_DELAY_MS);
+            for (int i = 0; i <= KEY_ANTINOISE_COUNT; i++) {
+                TIM_delayMs(KEY_ANTINOISE_DELAY_MS);
                 keys = TM1637_readInputs();
                 if (keys == keyState) {
-                    if (i == KEY_ANTINOIZE_COUNT) {
+                    if (i == KEY_ANTINOISE_COUNT) {
                         if (actionsCount < KEY_STEPS_TO_SPEEDUP) {
                             if (keyState == KEY_INC) {
                                 USART1_incDmxAddress();
