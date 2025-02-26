@@ -8,8 +8,8 @@
 #include "i2c.h"
 #include "pca9685.h"
 
-#define KEY_INC KEY_MATRIX_S16
-#define KEY_DEC KEY_MATRIX_S15
+#define KEY_INC KEY_MATRIX_S15
+#define KEY_DEC KEY_MATRIX_S16
 #define KEY_BOTH (KEY_INC & KEY_DEC)
 #define KEY_ANTINOISE_COUNT 4
 #define KEY_ANTINOISE_DELAY_MS 8
@@ -65,7 +65,7 @@ int main(void) {
     TIM_delayMs(100);
 
     TM1637_init();
-    TM1637_setBrightness(2);
+    TM1637_setBrightness(6);
     I2C1_init(400E3); // 400kHz
     PCA9685_init();
     USART1_init();

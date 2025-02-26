@@ -130,8 +130,11 @@ void TM1637_init(void) {
     GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR1;
     GPIOA->PUPDR &= ~GPIO_PUPDR_PUPDR1;
 
+    TIM_delayMs(10);
     _TM1637_clearIndicator();
+    TIM_delayMs(10);
     TM1637_setBrightness(8);
+    TIM_delayMs(10);
 }
 
 // Valid brightness values: 0 - 8.
