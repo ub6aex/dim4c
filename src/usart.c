@@ -9,6 +9,8 @@
 #define DMX_START_CODE 0 // DMX512 start code to react to (0 is for dimmers)
 #define DMX_ADDRESS_MIN 0
 #define DMX_ADDRESS_MAX 255
+#define TRUE 1
+#define FALSE 0
 
 uint16_t dmxAddress; // DMX512 base address
 uint8_t dmxBuffer[DMX_CHANNELS_NUM];
@@ -20,14 +22,15 @@ enum DMX_STATES {
 };
 enum DMX_STATES dmxState; // current DMX reception state
 
-void _USART1_setDmxAddress(uint16_t addr) {
+void _USART1_setDmxAddress(uint16_t addr, uint8_t saveToFlash) {
     if (addr > DMX_ADDRESS_MAX)
         addr = DMX_ADDRESS_MIN;
 
     dmxAddress = addr;
 
     // Write DMX address to flash memory
-    FLASH_writeOne(addr);
+    if (saveToFlash)
+        FLASH_writeOne(addr);
 
     // Update indicator data to display actual DMX address
     TM1637_displayDecimal(addr, 0);
@@ -82,7 +85,7 @@ void USART1_init(void) {
     dmxState = IDLE;
 
     // Read DMX address from flash memory and set
-    _USART1_setDmxAddress(FLASH_readOne());
+    _USART1_setDmxAddress(FLASH_readOne(), FALSE);
 
     // Clean buffer
     _USART1_fillDmxBufer(0);
@@ -111,19 +114,19 @@ void USART1_sendUInt(uint32_t number) {
 }
 
 void USART1_incDmxAddress(void) {
-    _USART1_setDmxAddress(_USART1_getDmxAddress() + 1);
+    _USART1_setDmxAddress(_USART1_getDmxAddress() + 1, TRUE);
 }
 
 void USART1_decDmxAddress(void) {
-    _USART1_setDmxAddress(_USART1_getDmxAddress() - 1);
+    _USART1_setDmxAddress(_USART1_getDmxAddress() - 1, TRUE);
 }
 
 void USART1_inc10DmxAddress(void) {
-    _USART1_setDmxAddress(_USART1_getDmxAddress() + 10);
+    _USART1_setDmxAddress(_USART1_getDmxAddress() + 10, TRUE);
 }
 
 void USART1_dec10DmxAddress(void) {
-    _USART1_setDmxAddress(_USART1_getDmxAddress() - 10);
+    _USART1_setDmxAddress(_USART1_getDmxAddress() - 10, TRUE);
 }
 
 void _USART1_updatePCA9685Outputs(void) {

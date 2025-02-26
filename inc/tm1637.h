@@ -24,6 +24,6 @@
 void TM1637_init(void);
 void TM1637_setBrightness(uint8_t brightness);
 void TM1637_displayDecimal(uint16_t value, uint8_t displaySeparator);
-uint8_t TM1637_readInputs(void);
+uint8_t TM1637_readButtons(void);
 
 #endif

@@ -185,7 +185,7 @@ void TM1637_displayDecimal(uint16_t value, uint8_t displaySeparator) {
 }
 
 // Read keys matrix
-uint8_t TM1637_readInputs(void) {
+uint8_t TM1637_readButtons(void) {
     _TM1637_sendStart();
     _TM1637_writeByte(0x42);
     _TM1637_readACK();

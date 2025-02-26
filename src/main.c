@@ -15,18 +15,20 @@
 #define KEY_ANTINOISE_DELAY_MS 8
 #define KEY_STEPS_TO_SPEEDUP 12
 #define KEY_ACTION_DELAY_MS 200
+#define TRUE 1
+#define FALSE 0
 
 uint8_t debugMode = 0;
 
 void _processKeys(void) {
-    uint8_t keys = TM1637_readInputs();
+    uint8_t keys = TM1637_readButtons();
     if ((keys == KEY_INC) || (keys == KEY_DEC)) {
         int actionsCount = 0;
         uint8_t keyState = keys;
         do {
             for (int i = 0; i <= KEY_ANTINOISE_COUNT; i++) {
                 TIM_delayMs(KEY_ANTINOISE_DELAY_MS);
-                keys = TM1637_readInputs();
+                keys = TM1637_readButtons();
                 if (keys == keyState) {
                     if (i == KEY_ANTINOISE_COUNT) {
                         if (actionsCount < KEY_STEPS_TO_SPEEDUP) {
@@ -63,12 +65,12 @@ void _processInputs(void) {
     uint8_t input1 = GPIO_input1State();
     if (input1 != 0) { // input is active
         if (!debugMode) {
-            debugMode = 1;
+            debugMode = TRUE;
             USART1_setDebugMode(debugMode);
         }
     } else { // input is not active
         if (debugMode) {
-            debugMode = 0;
+            debugMode = FALSE;
             USART1_setDebugMode(debugMode);
         }
     }
