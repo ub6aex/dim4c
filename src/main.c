@@ -16,6 +16,8 @@
 #define KEY_STEPS_TO_SPEEDUP 12
 #define KEY_ACTION_DELAY_MS 200
 
+uint8_t debugMode = 0;
+
 void _processKeys(void) {
     uint8_t keys = TM1637_readInputs();
     if ((keys == KEY_INC) || (keys == KEY_DEC)) {
@@ -57,6 +59,21 @@ void _processKeys(void) {
     }
 }
 
+void _processInputs(void) {
+    uint8_t input1 = GPIO_input1State();
+    if (input1 != 0) { // input is active
+        if (!debugMode) {
+            debugMode = 1;
+            USART1_setDebugMode(debugMode);
+        }
+    } else { // input is not active
+        if (debugMode) {
+            debugMode = 0;
+            USART1_setDebugMode(debugMode);
+        }
+    }
+}
+
 int main(void) {
     WDG_init(2000);
     RCC_init();
@@ -72,6 +89,7 @@ int main(void) {
 
     for(;;) {
         _processKeys();
+        _processInputs();
         WDG_reset();
     }
 }

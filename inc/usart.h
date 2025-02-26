@@ -12,5 +12,6 @@ void USART1_incDmxAddress(void);
 void USART1_decDmxAddress(void);
 void USART1_inc10DmxAddress(void);
 void USART1_dec10DmxAddress(void);
+void USART1_setDebugMode(uint8_t mode);
 
 #endif

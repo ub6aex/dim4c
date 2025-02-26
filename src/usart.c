@@ -41,6 +41,11 @@ uint8_t* USART1_getDmxBuffer(void) {
     return dmxBuffer;
 }
 
+void _USART1_fillDmxBufer(uint8_t value) {
+    for (uint8_t i = 0; i < DMX_CHANNELS_NUM; i++)
+        dmxBuffer[i] = value;
+}
+
 void USART1_init(void) {
     //PINs init
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // port A enable
@@ -80,8 +85,7 @@ void USART1_init(void) {
     _USART1_setDmxAddress(FLASH_readOne());
 
     // Clean buffer
-    for (uint8_t i = 0; i < DMX_CHANNELS_NUM; i++)
-        dmxBuffer[i] = 0;
+    _USART1_fillDmxBufer(0);
 
     // receive interrupt inable
     USART1->CR1 |= USART_CR1_RXNEIE;
@@ -171,4 +175,16 @@ void USART1_IRQHandler(void) {
     }
 
     USART1->CR1 |= USART_CR1_RXNEIE; // receive interrupt enable 
+}
+
+void USART1_setDebugMode(uint8_t debugMode) {
+    if (debugMode !=0) {
+        USART1->CR1 &= ~USART_CR1_RXNEIE; // receive interrupt disable 
+        GPIO_statusLedOn();
+        _USART1_fillDmxBufer(255);
+    } else {
+        USART1->CR1 |= USART_CR1_RXNEIE; // receive interrupt enable 
+        GPIO_statusLedOff();
+        _USART1_fillDmxBufer(0);
+    }
 }
