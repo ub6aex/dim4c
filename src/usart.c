@@ -7,7 +7,7 @@
 #include "pca9685.h"
 
 #define DMX_START_CODE 0 // DMX512 start code to react to (0 is for dimmers)
-#define DMX_ADDRESS_MIN 0
+#define DMX_ADDRESS_MIN 1
 #define DMX_ADDRESS_MAX 255
 #define TRUE 1
 #define FALSE 0
@@ -25,6 +25,8 @@ enum DMX_STATES dmxState; // current DMX reception state
 void _USART1_setDmxAddress(uint16_t addr, uint8_t saveToFlash) {
     if (addr > DMX_ADDRESS_MAX)
         addr = DMX_ADDRESS_MIN;
+    if (addr < DMX_ADDRESS_MIN)
+        addr = DMX_ADDRESS_MIN;
 
     dmxAddress = addr;
 
@@ -33,7 +35,7 @@ void _USART1_setDmxAddress(uint16_t addr, uint8_t saveToFlash) {
         FLASH_writeOne(addr);
 
     // Update indicator data to display actual DMX address
-    TM1637_displayDecimal(addr, 0);
+    TM1637_updateDisplay(addr);
 }
 
 uint16_t _USART1_getDmxAddress(void) {
@@ -181,7 +183,7 @@ void USART1_IRQHandler(void) {
 }
 
 void USART1_setDebugMode(uint8_t debugMode) {
-    if (debugMode !=0) {
+    if (debugMode) {
         USART1->CR1 &= ~USART_CR1_RXNEIE; // receive interrupt disable 
         GPIO_statusLedOn();
         _USART1_fillDmxBufer(255);

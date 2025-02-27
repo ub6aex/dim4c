@@ -11,6 +11,9 @@ const char segmentMap[] = {
     0x00
 };
 
+uint16_t displayValue;
+uint8_t dotPosition = 0;
+
 void _TM1637_setClkHigh(void) {
     GPIOA->BSRR = GPIO_BSRR_BS_0;
 }
@@ -114,52 +117,18 @@ int _TM1637_pow(int base, int power) {
     return res;
 }
 
-void TM1637_init(void) {
-    RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-
-    // CLK
-    // GPIO A0 output open-drain
-    GPIOA->MODER |= GPIO_MODER_MODER0_0;
-    GPIOA->MODER &= ~GPIO_MODER_MODER0_1;
-    GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR0;
-    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPDR0;
-
-    // DIO
-    // GPIO A1 output open-drain
-    _TM1637_setDioOutputMode();
-    GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR1;
-    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPDR1;
-
-    TIM_delayMs(10);
-    _TM1637_clearIndicator();
-    TIM_delayMs(10);
-    TM1637_setBrightness(8);
-    TIM_delayMs(10);
-}
-
-// Valid brightness values: 0 - 8.
-// 0 = display off.
-void TM1637_setBrightness(uint8_t brightness) {
-    /*
-     * Brightness command:
-     * 1000 0XXX = display off
-     * 1000 1BBB = display on, brightness 0-7
-     * X = don't care
-     * B = brightness
-     */
-    _TM1637_sendStart();
-    _TM1637_writeByte(0x87 + brightness);
-    _TM1637_readACK();
-    _TM1637_sendStop();
-}
-
-void TM1637_displayDecimal(uint16_t value, uint8_t displaySeparator) {
+/*
+ * Dot Position:
+ *     0 = do not display
+ *     1-n = display dot at position
+ */
+void _TM1637_displayDecimal(uint16_t value, uint8_t dotPosition) {
     unsigned char digitArr[NUM_OF_DIGITS];
     uint32_t v = value;
     for (int i = 0; i < NUM_OF_DIGITS; i++) {
         digitArr[i] = segmentMap[v % 10];
-        if (i == 2 && displaySeparator)
-            digitArr[i] |= 1 << 7;
+        if (dotPosition)
+            digitArr[dotPosition-1] |= 1 << 7;
         v /= 10;
     }
 
@@ -184,8 +153,49 @@ void TM1637_displayDecimal(uint16_t value, uint8_t displaySeparator) {
     _TM1637_sendStop();
 }
 
+void TM1637_init(void) {
+    RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+
+    // CLK
+    // GPIO A0 output open-drain
+    GPIOA->MODER |= GPIO_MODER_MODER0_0;
+    GPIOA->MODER &= ~GPIO_MODER_MODER0_1;
+    GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR0;
+    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPDR0;
+
+    // DIO
+    // GPIO A1 output open-drain
+    _TM1637_setDioOutputMode();
+    GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR1;
+    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPDR1;
+
+    TIM_delayMs(10);
+    _TM1637_clearIndicator();
+    TIM_delayMs(10);
+    TM1637_setBrightness(8);
+    TIM_delayMs(10);
+}
+
+/*
+ * Valid brightness values: 0 - 8.
+ * 0 = display off.
+ */
+void TM1637_setBrightness(uint8_t brightness) {
+    /*
+     * Brightness command:
+     * 1000 0XXX = display off
+     * 1000 1BBB = display on, brightness 0-7
+     * X = don't care
+     * B = brightness
+     */
+    _TM1637_sendStart();
+    _TM1637_writeByte(0x87 + brightness);
+    _TM1637_readACK();
+    _TM1637_sendStop();
+}
+
 // Read keys matrix
-uint8_t TM1637_readButtons(void) {
+uint8_t TM1637_readKeys(void) {
     _TM1637_sendStart();
     _TM1637_writeByte(0x42);
     _TM1637_readACK();
@@ -206,4 +216,14 @@ uint8_t TM1637_readButtons(void) {
     _TM1637_readACK();
     _TM1637_sendStop();
     return keys;
+}
+
+void TM1637_updateDisplay(uint16_t value) {
+    displayValue = value;
+    _TM1637_displayDecimal(displayValue, dotPosition);
+}
+
+void TM1637_setDotPosition(uint8_t pos) {
+    dotPosition = pos;
+    _TM1637_displayDecimal(displayValue, dotPosition);
 }

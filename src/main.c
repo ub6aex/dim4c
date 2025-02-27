@@ -11,53 +11,64 @@
 #define KEY_INC KEY_MATRIX_S15
 #define KEY_DEC KEY_MATRIX_S16
 #define KEY_BOTH (KEY_INC & KEY_DEC)
-#define KEY_ANTINOISE_COUNT 4
-#define KEY_ANTINOISE_DELAY_MS 8
 #define KEY_STEPS_TO_SPEEDUP 12
-#define KEY_ACTION_DELAY_MS 200
+#define KEY_ACTION_DELAY_MS 80
+#define KEY_ACTION_REPEAT_DELAY_MS 200
+#define KEY_BOTH_ACTION_DELAY_COUNT 30
 #define TRUE 1
 #define FALSE 0
 
-uint8_t debugMode = 0;
+uint8_t debugMode = FALSE; // Debug mode forces all outputs to max values ignoring DMX input
+uint8_t addressIncDecLockMode = TRUE; // DMX address inc/dec actions are disabled after boot
 
 void _processKeys(void) {
-    uint8_t keys = TM1637_readButtons();
-    if ((keys == KEY_INC) || (keys == KEY_DEC)) {
+    uint8_t keys = TM1637_readKeys();
+
+    // DMX address increment/decrement
+    if (!addressIncDecLockMode && ((keys == KEY_INC) || (keys == KEY_DEC))) {
         int actionsCount = 0;
-        uint8_t keyState = keys;
+        const uint8_t keysState = keys;
+        TIM_delayMs(KEY_ACTION_DELAY_MS);
         do {
-            for (int i = 0; i <= KEY_ANTINOISE_COUNT; i++) {
-                TIM_delayMs(KEY_ANTINOISE_DELAY_MS);
-                keys = TM1637_readButtons();
-                if (keys == keyState) {
-                    if (i == KEY_ANTINOISE_COUNT) {
-                        if (actionsCount < KEY_STEPS_TO_SPEEDUP) {
-                            if (keyState == KEY_INC) {
-                                USART1_incDmxAddress();
-                            }
-                            if (keyState == KEY_DEC) {
-                                USART1_decDmxAddress();
-                            }
-                            actionsCount++;
-                        } else {
-                            if (keyState == KEY_INC) {
-                                USART1_inc10DmxAddress();
-                            }
-                            if (keyState == KEY_DEC) {
-                                USART1_dec10DmxAddress();
-                            }
-                        }
-                        TIM_delayMs(KEY_ACTION_DELAY_MS);
+            if (keys == keysState) {
+                if (actionsCount < KEY_STEPS_TO_SPEEDUP) {
+                    if (keysState == KEY_INC) {
+                        USART1_incDmxAddress();
                     }
-                    continue;
+                    if (keysState == KEY_DEC) {
+                        USART1_decDmxAddress();
+                    }
+                    actionsCount++;
                 } else {
-                    break;
+                    if (keysState == KEY_INC) {
+                        USART1_inc10DmxAddress();
+                    }
+                    if (keysState == KEY_DEC) {
+                        USART1_dec10DmxAddress();
+                    }
                 }
             }
+            TIM_delayMs(KEY_ACTION_REPEAT_DELAY_MS);
+            keys = TM1637_readKeys();
             WDG_reset();
-        } while (keys == keyState);
+        } while (keys == keysState);
     }
+
+    // Keys lock off
     if (keys == KEY_BOTH) {
+        uint8_t delayCounter = 0;
+        do {
+            TIM_delayMs(KEY_ACTION_DELAY_MS);
+            keys = TM1637_readKeys();
+            if (keys == KEY_BOTH) {
+                if (delayCounter == KEY_BOTH_ACTION_DELAY_COUNT) {
+                    addressIncDecLockMode = FALSE; // enable DMX address inc/dec actions
+                    TM1637_setDotPosition(1);
+                } else
+                    delayCounter++;
+            }
+            WDG_reset();
+        } while (keys == KEY_BOTH);
     }
 }
 
