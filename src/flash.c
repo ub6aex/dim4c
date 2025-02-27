@@ -39,9 +39,9 @@ uint32_t _FLASH_read(uint32_t flash_addr) {
 uint8_t _FLASH_erasePage(uint32_t page_addr) {
     while(!_FLASH_ready()); // wait
 
-    FLASH->CR|= FLASH_CR_PER; // enable page erasing
+    FLASH->CR |= FLASH_CR_PER; // enable page erasing
     FLASH->AR = page_addr; // set page address
-    FLASH->CR|= FLASH_CR_STRT; // start the erasing
+    FLASH->CR |= FLASH_CR_STRT; // start the erasing
     while(!_FLASH_ready());  // wait for page erase complete
     FLASH->CR &= ~FLASH_CR_PER; // disable the page erase
 

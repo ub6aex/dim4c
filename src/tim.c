@@ -13,7 +13,7 @@ void TIM_init(void) {
     TIM3->CR1 |= TIM_CR1_OPM; // one pulse mode
 
     RCC->APB1ENR |= RCC_APB1ENR_TIM14EN; // TIM14 clock enable
-    TIM14->PSC = 24000-1; // prescaler
+    TIM14->PSC = 16000; // prescaler
     TIM14->ARR = 4;
     TIM14->CNT = 0;
     TIM14->DIER |= TIM_DIER_UIE; // enable interrupt
@@ -34,6 +34,7 @@ void TIM_delayUs(uint32_t micros) {
     while (micros--);
 }
 
+// Outputs LEDs blinking
 void TIM14_IRQHandler(void) {
     if(TIM14->SR & TIM_SR_UIF) {
         TIM14->SR &= ~TIM_SR_UIF;
