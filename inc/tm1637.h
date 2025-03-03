@@ -22,9 +22,10 @@
 #define KEY_MATRIX_S16 0b00001111
 
 void TM1637_init(void);
-void TM1637_setBrightness(uint8_t brightness);
 uint8_t TM1637_readKeys(void);
 void TM1637_updateDisplay(uint16_t value);
 void TM1637_setDotPosition(uint8_t pos);
+void TM1637_updateConfigDisplay(uint8_t param, uint8_t value);
+void TM1637_setBrightness(uint8_t brightness);
 
 #endif

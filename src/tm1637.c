@@ -1,17 +1,18 @@
 #include "tm1637.h"
 #include "stm32f0xx.h"
 #include "tim.h"
+#include "flash.h"
 
 #define NUM_OF_DIGITS 3 // Number of digits on 7-segment indicator.
 #define MAX_DIGITS 6 // Maximum digits tm1637 supports.
 
-const char segmentMap[] = {
+const uint8_t segmentMap[] = {
     0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, // 0-7
     0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e, 0x79, 0x71, // 8-9, A-F
     0x00
 };
 
-uint16_t displayValue;
+uint16_t displayValue; // current value displayed
 uint8_t dotPosition = 0;
 
 void _TM1637_setClkHigh(void) {
@@ -66,7 +67,7 @@ void _TM1637_readACK(void) {
 }
 
 void _TM1637_writeByte(unsigned char b) {
-    for (int i = 0; i < 8; ++i) {
+    for (uint8_t i=0; i<8; ++i) {
         _TM1637_setClkLow();
         if (b & 0x01)
             _TM1637_setDioHigh();
@@ -102,7 +103,7 @@ void _TM1637_clearIndicator(void) {
     _TM1637_readACK();
 
     // Send data
-    for (int i = 0; i < MAX_DIGITS; i++) {
+    for (uint8_t i=0; i<MAX_DIGITS; i++) {
         _TM1637_writeByte(0);
         _TM1637_readACK();
     }
@@ -110,34 +111,14 @@ void _TM1637_clearIndicator(void) {
     _TM1637_sendStop();
 }
 
-int _TM1637_pow(int base, int power) {
-    int res = base;
-    for (int i = 1; i < power; i++)
-        res = res * res;
+uint32_t _TM1637_pow(uint32_t base, uint32_t power) {
+    uint32_t res = base;
+    for (uint32_t i=1; i<power; i++)
+        res = res*res;
     return res;
 }
 
-/*
- * Dot Position:
- *     0 = do not display
- *     1-n = display dot at position
- */
-void _TM1637_displayDecimal(uint16_t value, uint8_t dotPosition) {
-    unsigned char digitArr[NUM_OF_DIGITS];
-    uint32_t v = value;
-    for (int i = 0; i < NUM_OF_DIGITS; i++) {
-        digitArr[i] = segmentMap[v % 10];
-        if (dotPosition)
-            digitArr[dotPosition-1] |= 1 << 7;
-        v /= 10;
-    }
-
-    // Remove trailing zeros
-    for (int i = 1; i < NUM_OF_DIGITS; i++) {
-        if(value < _TM1637_pow(10,i))
-            digitArr[i] = segmentMap[16];
-    }
-
+void _TM1637_writeData(uint8_t *data, uint8_t length) {
     _TM1637_sendWriteDataCommand();
 
     // Send display address command to set address C0h
@@ -146,10 +127,52 @@ void _TM1637_displayDecimal(uint16_t value, uint8_t dotPosition) {
     _TM1637_readACK();
 
     // Send data
-    for (int i = 1; i <= NUM_OF_DIGITS; i++) {
-        _TM1637_writeByte(digitArr[NUM_OF_DIGITS - i]);
+    for (uint8_t i=1; i<=length; i++) {
+        _TM1637_writeByte(data[length-i]);
         _TM1637_readACK();
     }
+    _TM1637_sendStop();
+}
+
+/*
+ * Dot Position:
+ *     0 = do not display
+ *     1-n = display dot at position
+ */
+void _TM1637_displayDecimal(uint16_t value, uint8_t dotPosition) {
+    uint8_t digitArr[NUM_OF_DIGITS];
+    uint32_t v = value;
+    for (uint8_t i=0; i<NUM_OF_DIGITS; i++) {
+        digitArr[i] = segmentMap[v % 10];
+        if (dotPosition)
+            digitArr[dotPosition-1] |= 1 << 7;
+        v /= 10;
+    }
+
+    // Remove trailing zeros
+    for (uint8_t i=1; i<NUM_OF_DIGITS; i++) {
+        if(value < _TM1637_pow(10,i))
+            digitArr[i] = segmentMap[16];
+    }
+
+    _TM1637_writeData(digitArr, NUM_OF_DIGITS);
+}
+
+/*
+ * Valid brightness values: 0 - 8.
+ * 0 = display off.
+ */
+void TM1637_setBrightness(uint8_t brightness) {
+    /*
+     * Brightness command:
+     * 1000 0XXX = display off
+     * 1000 1BBB = display on, brightness 0-7
+     * X = don't care
+     * B = brightness
+     */
+    _TM1637_sendStart();
+    _TM1637_writeByte(0x87 + brightness);
+    _TM1637_readACK();
     _TM1637_sendStop();
 }
 
@@ -172,26 +195,8 @@ void TM1637_init(void) {
     TIM_delayMs(10);
     _TM1637_clearIndicator();
     TIM_delayMs(10);
-    TM1637_setBrightness(8);
+    TM1637_setBrightness(FLASH_getConfig(PARAMS_BRIGHTNESS));
     TIM_delayMs(10);
-}
-
-/*
- * Valid brightness values: 0 - 8.
- * 0 = display off.
- */
-void TM1637_setBrightness(uint8_t brightness) {
-    /*
-     * Brightness command:
-     * 1000 0XXX = display off
-     * 1000 1BBB = display on, brightness 0-7
-     * X = don't care
-     * B = brightness
-     */
-    _TM1637_sendStart();
-    _TM1637_writeByte(0x87 + brightness);
-    _TM1637_readACK();
-    _TM1637_sendStop();
 }
 
 // Read keys matrix
@@ -202,7 +207,7 @@ uint8_t TM1637_readKeys(void) {
 
     uint8_t keys = 0;
     _TM1637_setDioInputMode();
-    for (int i = 0; i < 8; i++) {
+    for (uint8_t i = 0; i < 8; i++) {
         keys <<= 1;
         _TM1637_setClkLow();
         TIM_delayUs(30);
@@ -226,4 +231,14 @@ void TM1637_updateDisplay(uint16_t value) {
 void TM1637_setDotPosition(uint8_t pos) {
     dotPosition = pos;
     _TM1637_displayDecimal(displayValue, dotPosition);
+}
+
+void TM1637_updateConfigDisplay(uint8_t param, uint8_t value) {
+    uint8_t digitArr[3];
+    digitArr[0] = segmentMap[value % 10];
+    digitArr[1] = segmentMap[16];
+    digitArr[2] = segmentMap[param % 10];
+    digitArr[2] |= 1 << 7; // add dot to param
+
+    _TM1637_writeData(digitArr, 3);
 }

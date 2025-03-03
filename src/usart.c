@@ -5,14 +5,14 @@
 #include <stdio.h>
 #include "gpio.h"
 #include "pca9685.h"
+#include "tim.h"
 
 #define DMX_START_CODE 0 // DMX512 start code to react to (0 is for dimmers)
 #define DMX_ADDRESS_MIN 1
 #define DMX_ADDRESS_MAX 255
-#define TRUE 1
-#define FALSE 0
 
 uint16_t dmxAddress; // DMX512 base address
+uint8_t dmxAddressOffset; // DMX512 base address offset
 uint8_t dmxBuffer[DMX_CHANNELS_NUM];
 uint16_t dmxFrameNum;
 enum DMX_STATES {
@@ -22,7 +22,7 @@ enum DMX_STATES {
 };
 enum DMX_STATES dmxState; // current DMX reception state
 
-void _USART1_setDmxAddress(uint16_t addr, uint8_t saveToFlash) {
+void _USART1_setDmxAddress(uint16_t addr, bool saveToFlash) {
     if (addr > DMX_ADDRESS_MAX)
         addr = DMX_ADDRESS_MIN;
     if (addr < DMX_ADDRESS_MIN)
@@ -32,7 +32,7 @@ void _USART1_setDmxAddress(uint16_t addr, uint8_t saveToFlash) {
 
     // Write DMX address to flash memory
     if (saveToFlash)
-        FLASH_writeOne(addr);
+        while (!FLASH_setConfig(PARAMS_DMX_ADDRESS, addr));
 
     // Update indicator data to display actual DMX address
     TM1637_updateDisplay(addr);
@@ -42,13 +42,21 @@ uint16_t _USART1_getDmxAddress(void) {
     return dmxAddress;
 }
 
-uint8_t* USART1_getDmxBuffer(void) {
-    return dmxBuffer;
+uint16_t _USART1_getDmxAddressWithOffset(void) {
+    return dmxAddress + dmxAddressOffset;
 }
 
 void _USART1_fillDmxBufer(uint8_t value) {
     for (uint8_t i = 0; i < DMX_CHANNELS_NUM; i++)
         dmxBuffer[i] = value;
+}
+
+uint8_t* USART1_getDmxBuffer(void) {
+    return dmxBuffer;
+}
+
+void USART1_updateDmxAddressOffset(uint8_t offset) {
+    dmxAddressOffset = offset;
 }
 
 void USART1_init(void) {
@@ -87,7 +95,10 @@ void USART1_init(void) {
     dmxState = IDLE;
 
     // Read DMX address from flash memory and set
-    _USART1_setDmxAddress(FLASH_readOne(), FALSE);
+    dmxAddressOffset = FLASH_getConfig(PARAMS_DMX_ADDRESS_OFFSET);
+
+    // Read DMX address from flash memory and set
+    _USART1_setDmxAddress(FLASH_getConfig(PARAMS_DMX_ADDRESS), false);
 
     // Clean buffer
     _USART1_fillDmxBufer(0);
@@ -116,19 +127,19 @@ void USART1_sendUInt(uint32_t number) {
 }
 
 void USART1_incDmxAddress(void) {
-    _USART1_setDmxAddress(_USART1_getDmxAddress() + 1, TRUE);
+    _USART1_setDmxAddress(_USART1_getDmxAddress() + 1, true);
 }
 
 void USART1_decDmxAddress(void) {
-    _USART1_setDmxAddress(_USART1_getDmxAddress() - 1, TRUE);
+    _USART1_setDmxAddress(_USART1_getDmxAddress() - 1, true);
 }
 
 void USART1_inc10DmxAddress(void) {
-    _USART1_setDmxAddress(_USART1_getDmxAddress() + 10, TRUE);
+    _USART1_setDmxAddress(_USART1_getDmxAddress() + 10, true);
 }
 
 void USART1_dec10DmxAddress(void) {
-    _USART1_setDmxAddress(_USART1_getDmxAddress() - 10, TRUE);
+    _USART1_setDmxAddress(_USART1_getDmxAddress() - 10, true);
 }
 
 void _USART1_updatePCA9685Outputs(void) {
@@ -166,8 +177,9 @@ void USART1_IRQHandler(void) {
                     dmxState = IDLE; // not addressed to us - wait for BREAK
             } else if (dmxState == DATA_RECEIVE) {
                 GPIO_statusLedOn();
-                if ((dmxFrameNum >= _USART1_getDmxAddress()) && (dmxFrameNum < (_USART1_getDmxAddress() + DMX_CHANNELS_NUM))) { // addressed to us
-                    uint8_t n = dmxFrameNum - _USART1_getDmxAddress();
+                if ((dmxFrameNum >= _USART1_getDmxAddressWithOffset()) && (dmxFrameNum < (_USART1_getDmxAddressWithOffset() + DMX_CHANNELS_NUM))) { // addressed to us
+                    TIM_dmxTimeoutCounterReset();
+                    uint8_t n = dmxFrameNum - _USART1_getDmxAddressWithOffset();
                     if (n < DMX_CHANNELS_NUM)
                         dmxBuffer[n] = byte;
                     if (n == (DMX_CHANNELS_NUM - 1))
@@ -182,7 +194,7 @@ void USART1_IRQHandler(void) {
     USART1->CR1 |= USART_CR1_RXNEIE; // receive interrupt enable 
 }
 
-void USART1_setDebugMode(uint8_t debugMode) {
+void USART1_setDebugMode(bool debugMode) {
     if (debugMode) {
         USART1->CR1 &= ~USART_CR1_RXNEIE; // receive interrupt disable 
         GPIO_statusLedOn();

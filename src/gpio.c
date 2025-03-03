@@ -114,6 +114,6 @@ void GPIO_outLedOff(uint8_t num) {
     }
 }
 
-uint8_t GPIO_input1State(void) {
+bool GPIO_getInput1State(void) {
     return !(GPIOA->IDR & GPIO_IDR_2);
 }
