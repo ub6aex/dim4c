@@ -47,7 +47,7 @@ uint16_t _USART1_getDmxAddressWithOffset(void) {
 }
 
 void _USART1_fillDmxBufer(uint8_t value) {
-    for (uint8_t i = 0; i < DMX_CHANNELS_NUM; i++)
+    for (uint8_t i=0; i<DMX_CHANNELS_NUM; i++)
         dmxBuffer[i] = value;
 }
 
@@ -197,11 +197,11 @@ void USART1_IRQHandler(void) {
 void USART1_setDebugMode(bool debugMode) {
     if (debugMode) {
         USART1->CR1 &= ~USART_CR1_RXNEIE; // receive interrupt disable 
-        GPIO_statusLedOn();
+        TM1637_indicateDebugMode();
         _USART1_fillDmxBufer(255);
     } else {
         USART1->CR1 |= USART_CR1_RXNEIE; // receive interrupt enable 
-        GPIO_statusLedOff();
+        _USART1_setDmxAddress(_USART1_getDmxAddress(), false);
         _USART1_fillDmxBufer(0);
     }
 }

@@ -9,7 +9,7 @@
 const uint8_t segmentMap[] = {
     0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, // 0-7
     0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e, 0x79, 0x71, // 8-9, A-F
-    0x00
+    0x00, 0x40 // void, minus(-)
 };
 
 uint16_t displayValue; // current value displayed
@@ -207,7 +207,7 @@ uint8_t TM1637_readKeys(void) {
 
     uint8_t keys = 0;
     _TM1637_setDioInputMode();
-    for (uint8_t i = 0; i < 8; i++) {
+    for (uint8_t i=0; i<8; i++) {
         keys <<= 1;
         _TM1637_setClkLow();
         TIM_delayUs(30);
@@ -234,11 +234,18 @@ void TM1637_setDotPosition(uint8_t pos) {
 }
 
 void TM1637_updateConfigDisplay(uint8_t param, uint8_t value) {
-    uint8_t digitArr[3];
+    uint8_t digitArr[NUM_OF_DIGITS];
     digitArr[0] = segmentMap[value % 10];
     digitArr[1] = segmentMap[16];
     digitArr[2] = segmentMap[param % 10];
     digitArr[2] |= 1 << 7; // add dot to param
 
-    _TM1637_writeData(digitArr, 3);
+    _TM1637_writeData(digitArr, NUM_OF_DIGITS);
+}
+
+void TM1637_indicateDebugMode(void) {
+    uint8_t digitArr[NUM_OF_DIGITS];
+    for (uint8_t i=0; i<NUM_OF_DIGITS; i++)
+        digitArr[i] = segmentMap[17];
+    _TM1637_writeData(digitArr, NUM_OF_DIGITS);
 }

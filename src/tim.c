@@ -66,8 +66,7 @@ void TIM_delayUs(uint32_t micros) {
 void TIM14_IRQHandler(void) {
     dmxBuf = USART1_getDmxBuffer();
 
-    uint8_t n;
-    for (n=0; n<DMX_CHANNELS_NUM; n++) {
+    for (uint8_t n=0; n<DMX_CHANNELS_NUM; n++) {
         if (dmxBuf[n] == 0) {
             GPIO_outLedOff(n+1);
         } else {
@@ -86,8 +85,7 @@ void TIM14_IRQHandler(void) {
 // DMX512 timout
 void TIM16_IRQHandler(void) {
     dmxBuf = USART1_getDmxBuffer();
-    uint8_t n;
-    for (n=0; n<DMX_CHANNELS_NUM; n++)
+    for (uint8_t n=0; n<DMX_CHANNELS_NUM; n++)
         dmxBuf[n] = 0;
 
     TIM16->SR &= ~TIM_SR_UIF;

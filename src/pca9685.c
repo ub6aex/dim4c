@@ -37,8 +37,7 @@ void PCA9685_init(void) {
 void PCA9685_setOutputs(uint8_t *values, uint8_t length) {
     uint8_t buf[length*4];
 
-    uint8_t i;
-    for(i = 0; i < length; i++) {
+    for (uint8_t i=0; i<length; i++) {
         if (values[i] == 255) {
             buf[i*4] = 0x00;
             buf[i*4+1] = 0x10;

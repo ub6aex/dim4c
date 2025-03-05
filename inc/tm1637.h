@@ -27,5 +27,6 @@ void TM1637_updateDisplay(uint16_t value);
 void TM1637_setDotPosition(uint8_t pos);
 void TM1637_updateConfigDisplay(uint8_t param, uint8_t value);
 void TM1637_setBrightness(uint8_t brightness);
+void TM1637_indicateDebugMode(void);
 
 #endif
