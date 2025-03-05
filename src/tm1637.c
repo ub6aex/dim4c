@@ -195,7 +195,7 @@ void TM1637_init(void) {
     TIM_delayMs(10);
     _TM1637_clearIndicator();
     TIM_delayMs(10);
-    TM1637_setBrightness(FLASH_getConfig(PARAMS_BRIGHTNESS));
+    TM1637_setBrightness(FLASH_getUserConfig(USER_CONFIG_BRIGHTNESS));
     TIM_delayMs(10);
 }
 

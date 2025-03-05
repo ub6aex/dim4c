@@ -1,11 +1,12 @@
 #include "stm32f0xx.h"
 #include "flash.h"
 
-#define STM32F0xx_PAGE_SIZE 0x400 // 1 Kilobyte
-#define STM32F0xx_FLASH_PAGE0_STARTADDR 0x08000000
-#define STM32F0xx_FLASH_PAGE15_STARTADDR (STM32F0xx_FLASH_PAGE0_STARTADDR+15*STM32F0xx_PAGE_SIZE)
-#define PAGE15_ADDR STM32F0xx_FLASH_PAGE15_STARTADDR // 0x08003C00
-#define WORD_LENGTH_BYTES 4
+__attribute__((section(".user_config"))) const uint32_t user_config[USER_CONFIG_LENGTH] = {
+    USER_CONFIG_DMX_ADDRESS_DEFAULT,
+    USER_CONFIG_BRIGHTNESS_DEFAULT,
+    USER_CONFIG_DMX_ADDRESS_OFFSET_DEFAULT,
+    USER_CONFIG_DMX_DISABLE_TIMEOUT_DEFAULT
+};
 
 void _FLASH_unlock(void) {
     while (FLASH->SR & FLASH_SR_BSY); // wait till no operation is on going
@@ -65,29 +66,29 @@ bool _FLASH_write(uint32_t flash_addr, uint32_t data) {
     return _FLASH_checkEOP();
 }
 
-uint32_t FLASH_getConfig(uint16_t parameter) {
-    return _FLASH_read(PAGE15_ADDR + parameter*WORD_LENGTH_BYTES);
+uint32_t FLASH_getUserConfig(uint16_t parameter) {
+    return user_config[parameter];
 }
 
-bool FLASH_setConfig(uint16_t parameter, uint32_t value) {
+bool FLASH_setUserConfig(uint16_t parameter, uint32_t value) {
     bool success = true;
 
     // bufferize existing config
-    uint32_t config[PARAMS_LENGTH];
-    for (uint8_t i=0; i<PARAMS_LENGTH; i++)
-        config[i] = FLASH_getConfig(i);
+    uint32_t config[USER_CONFIG_LENGTH];
+    for (uint8_t i=0; i<USER_CONFIG_LENGTH; i++)
+        config[i] = FLASH_getUserConfig(i);
 
     // modify desired value
     config[parameter] = value;
 
     _FLASH_unlock();
     // erase config page
-    if (!_FLASH_erasePage(PAGE15_ADDR)) {
+    if (!_FLASH_erasePage((uint32_t)user_config)) {
         success = false;
     } else {
         // write updated config
-        for (uint8_t i=0; i<PARAMS_LENGTH; i++) {
-            if (!_FLASH_write(PAGE15_ADDR + i*WORD_LENGTH_BYTES , config[i]))
+        for (uint8_t i=0; i<USER_CONFIG_LENGTH; i++) {
+            if (!_FLASH_write((uint32_t)(user_config+i), config[i]))
                 success = false;
         }
     }

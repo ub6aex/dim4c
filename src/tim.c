@@ -46,7 +46,7 @@ void TIM_init(void) {
     RCC->APB2ENR |= RCC_APB2ENR_TIM16EN; // TIM16 clock enable
     TIM16->PSC = (SYSTEMCOREFREQ/TIM16FREQ) - 1; // prescaler
     TIM_dmxTimeoutCounterReset();
-    TIM_setDmxTimeout(FLASH_getConfig(PARAMS_DMX_DISABLE_TIMEOUT));
+    TIM_setDmxTimeout(FLASH_getUserConfig(USER_CONFIG_DMX_DISABLE_TIMEOUT));
 }
 
 void TIM_delayMs(uint16_t value) {

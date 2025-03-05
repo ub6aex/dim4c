@@ -104,45 +104,45 @@ void _enterConfigModeIfRequired(void) {
                 if (delayCounter == KEY_BOTH_ACTION_DELAY_COUNT) {
                     // enter config menu
                     uint8_t param = 1;
-                    uint8_t value = FLASH_getConfig(param);
+                    uint8_t value = FLASH_getUserConfig(param);
                     TM1637_updateConfigDisplay(param, value);
                     TIM_delayMs(KEY_ACTION_REPEAT_DELAY_MS*4);
                     for(;;) {
                         keys = TM1637_readKeys();
                         if (keys == KEY_INC) {
                             switch (param) {
-                                case PARAMS_BRIGHTNESS:
-                                    if (value >= PARAMS_BRIGHTNESS_MAX)
-                                        value = PARAMS_BRIGHTNESS_MIN;
+                                case USER_CONFIG_BRIGHTNESS:
+                                    if (value >= USER_CONFIG_BRIGHTNESS_MAX)
+                                        value = USER_CONFIG_BRIGHTNESS_MIN;
                                     else
                                         value++;
                                     TM1637_setBrightness(value);
                                     break;
-                                case PARAMS_DMX_ADDRESS_OFFSET:
-                                    if (value >= PARAMS_DMX_ADDRESS_OFFSET_MAX)
-                                        value = PARAMS_DMX_ADDRESS_OFFSET_MIN;
+                                case USER_CONFIG_DMX_ADDRESS_OFFSET:
+                                    if (value >= USER_CONFIG_DMX_ADDRESS_OFFSET_MAX)
+                                        value = USER_CONFIG_DMX_ADDRESS_OFFSET_MIN;
                                     else
                                         value++;
                                     USART1_updateDmxAddressOffset(value);
                                     break;
-                                case PARAMS_DMX_DISABLE_TIMEOUT:
-                                    if (value >= PARAMS_DMX_DISABLE_TIMEOUT_MAX)
-                                        value = PARAMS_DMX_DISABLE_TIMEOUT_MIN;
+                                case USER_CONFIG_DMX_DISABLE_TIMEOUT:
+                                    if (value >= USER_CONFIG_DMX_DISABLE_TIMEOUT_MAX)
+                                        value = USER_CONFIG_DMX_DISABLE_TIMEOUT_MIN;
                                     else
                                         value++;
                                     TIM_setDmxTimeout(value);
                                     break;
                             }
-                            while (!FLASH_setConfig(param, value));
+                            while (!FLASH_setUserConfig(param, value));
                             TM1637_updateConfigDisplay(param, value);
                             TIM_delayMs(KEY_ACTION_REPEAT_DELAY_MS*2);
                         }
                         if (keys == KEY_DEC) {
-                            if (param == PARAMS_LENGTH-1)
-                                param = PARAMS_BRIGHTNESS;
+                            if (param == USER_CONFIG_LENGTH-1)
+                                param = USER_CONFIG_BRIGHTNESS;
                             else
                                 param++;
-                            value = FLASH_getConfig(param);
+                            value = FLASH_getUserConfig(param);
                             TM1637_updateConfigDisplay(param, value);
                             TIM_delayMs(KEY_ACTION_REPEAT_DELAY_MS*2);
                         }

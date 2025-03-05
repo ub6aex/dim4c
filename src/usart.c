@@ -32,7 +32,7 @@ void _USART1_setDmxAddress(uint16_t addr, bool saveToFlash) {
 
     // Write DMX address to flash memory
     if (saveToFlash)
-        while (!FLASH_setConfig(PARAMS_DMX_ADDRESS, addr));
+        while (!FLASH_setUserConfig(USER_CONFIG_DMX_ADDRESS, addr));
 
     // Update indicator data to display actual DMX address
     TM1637_updateDisplay(addr);
@@ -95,10 +95,10 @@ void USART1_init(void) {
     dmxState = IDLE;
 
     // Read DMX address from flash memory and set
-    dmxAddressOffset = FLASH_getConfig(PARAMS_DMX_ADDRESS_OFFSET);
+    dmxAddressOffset = FLASH_getUserConfig(USER_CONFIG_DMX_ADDRESS_OFFSET);
 
     // Read DMX address from flash memory and set
-    _USART1_setDmxAddress(FLASH_getConfig(PARAMS_DMX_ADDRESS), false);
+    _USART1_setDmxAddress(FLASH_getUserConfig(USER_CONFIG_DMX_ADDRESS), false);
 
     // Clean buffer
     _USART1_fillDmxBufer(0);
