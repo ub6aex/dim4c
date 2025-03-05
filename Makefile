@@ -1,4 +1,4 @@
-PRJ_NAME   = open4cc
+PRJ_NAME   = dim4c
 SRCDIR     = src
 BUILD_DIR  = build
 SRC        = $(wildcard $(SRCDIR)/*.c)
