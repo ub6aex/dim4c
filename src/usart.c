@@ -199,9 +199,11 @@ void USART1_setDebugMode(bool debugMode) {
         USART1->CR1 &= ~USART_CR1_RXNEIE; // receive interrupt disable 
         TM1637_indicateDebugMode();
         _USART1_fillDmxBufer(255);
+        _USART1_updatePCA9685Outputs();
     } else {
-        USART1->CR1 |= USART_CR1_RXNEIE; // receive interrupt enable 
-        _USART1_setDmxAddress(_USART1_getDmxAddress(), false);
         _USART1_fillDmxBufer(0);
+        _USART1_updatePCA9685Outputs();
+        _USART1_setDmxAddress(_USART1_getDmxAddress(), false);
+        USART1->CR1 |= USART_CR1_RXNEIE; // receive interrupt enable 
     }
 }
